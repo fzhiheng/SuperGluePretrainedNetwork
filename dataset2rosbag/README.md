@@ -47,6 +47,8 @@
 
 # Run
 
+## 输出匹配关系npz文件
+
 1. 从nuscenes mini数据集中生成pairs:
 
 `python -m dataset2rosbag.nuscenes_process --mini_root /path/to/v1.0-mini --scene 0061 --save_mode sweep --save_cam CAM_FRONT`
@@ -65,3 +67,8 @@
 3. 若仅从pairs生成匹配关系
 
 `./match_pairs.py --resize 1600 --superglue outdoor --max_keypoints 2048 --nms_radius 3 --resize_float --input_dir /path/to/img --input_pairs /path/to/pairs.txt --output_dir /path/to/output `
+
+
+## 从npz文件到rosbag
+
+`python3 -m dataset2rosbag.nuscenes2rosbag --npz_root glue_output/scene-0061/sweep/CAM_FRONT_1600_1024 --intrinsic_path nuscenes_output/scene-0061/CAM_FRONT.json `
