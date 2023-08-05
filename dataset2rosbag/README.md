@@ -53,7 +53,7 @@
 
 2. 若生成pairs的同时，生成匹配关系
 
-`python -m dataset2rosbag.nuscenes_process --mini_root /path/to/v1.0-mini --scene 0061 --save_mode sweep --save_cam CAM_FRONT --glue_flag`
+`python -m dataset2rosbag.nuscenes_process --mini_root /path/to/v1.0-mini --scene 0061 --save_mode sweep --save_cam CAM_FRONT --glue`
 
 待选参数：
 `--max_keypoints 1024`
