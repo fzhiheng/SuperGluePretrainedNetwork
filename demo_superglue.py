@@ -67,7 +67,7 @@ if __name__ == '__main__':
              'or path to an image directory or movie file')
     parser.add_argument(
         '--output_dir', type=str, default=None,
-        help='Directory where to write output frames (If None, no output)')
+        help='Directory where to write output_glue frames (If None, no output_glue)')
 
     parser.add_argument(
         '--image_glob', type=str, nargs='+', default=['*.png', '*.jpg', '*.jpeg'],

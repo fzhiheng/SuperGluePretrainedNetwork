@@ -123,7 +123,7 @@ if __name__ == '__main__':
         help='Use faster image visualization with OpenCV instead of Matplotlib')
     parser.add_argument(
         '--cache', action='store_true',
-        help='Skip the pair if output .npz files are already found')
+        help='Skip the pair if output_glue .npz files are already found')
     parser.add_argument(
         '--show_keypoints', action='store_true',
         help='Plot the keypoints in addition to the matches')
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         help='Visualization file extension. Use pdf for highest-quality.')
     parser.add_argument(
         '--opencv_display', action='store_true',
-        help='Visualize via OpenCV before saving output images')
+        help='Visualize via OpenCV before saving output_glue images')
     parser.add_argument(
         '--shuffle', action='store_true',
         help='Shuffle ordering of pairs before processing')
@@ -166,14 +166,29 @@ if __name__ == '__main__':
     if opt.max_length > -1:
         pairs = pairs[0:np.min([len(pairs), opt.max_length])]
 
+    # 使用random生成随机索引虽paris进行随机排序
+    index = list(range(len(pairs)))
     if opt.shuffle:
-        random.Random(0).shuffle(pairs)
+        random.Random(0).shuffle(index)
+        pairs = [pairs[i] for i in index]
 
     if opt.eval:
         if not all([len(p) == 38 for p in pairs]):
             raise ValueError(
                 'All pairs should have ground truth info for evaluation.'
                 'File \"{}\" needs 38 valid entries per row'.format(opt.input_pairs))
+
+    # 如果input_dir是一个文件，那么从这个文件中读取图片路径
+    input_dir = Path(opt.input_dir)
+    if input_dir.is_dir():
+        print('Looking for data in directory \"{}\"'.format(input_dir))
+    elif input_dir.is_file():
+        print('get data from file \"{}\"'.format(input_dir))
+        with open(opt.input_dir, 'r') as f:
+            input_image_roots = [l.split() for l in f.readlines()]
+        if opt.shuffle:
+            input_image_roots = [input_image_roots[i] for i in index]
+
 
     # Load the SuperPoint and SuperGlue models.
     device = 'cuda' if torch.cuda.is_available() and not opt.force_cpu else 'cpu'
@@ -192,9 +207,7 @@ if __name__ == '__main__':
     }
     matching = Matching(config).eval().to(device)
 
-    # Create the output directories if they do not exist already.
-    input_dir = Path(opt.input_dir)
-    print('Looking for data in directory \"{}\"'.format(input_dir))
+    # Create the output_glue directories if they do not exist already.
     output_dir = Path(opt.output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
     print('Will write matches to directory \"{}\"'.format(output_dir))
@@ -259,13 +272,20 @@ if __name__ == '__main__':
             rot0, rot1 = 0, 0
 
         # Load the image pair.
+        if input_dir.is_dir():
+            image_root0 = input_dir
+            image_root1 = input_dir
+        elif input_dir.is_file():
+            image_root0 = Path(input_image_roots[i][0])
+            image_root1 = Path(input_image_roots[i][1])
+
         image0, inp0, scales0 = read_image(
-            input_dir / name0, device, opt.resize, rot0, opt.resize_float)
+            image_root0 / name0, device, opt.resize, rot0, opt.resize_float)
         image1, inp1, scales1 = read_image(
-            input_dir / name1, device, opt.resize, rot1, opt.resize_float)
+            image_root1 / name1, device, opt.resize, rot1, opt.resize_float)
         if image0 is None or image1 is None:
             print('Problem reading image pair: {} {}'.format(
-                input_dir/name0, input_dir/name1))
+                image_root0/name0, image_root1/name1))
             exit(1)
         timer.update('load_image')
 
