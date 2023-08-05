@@ -2,7 +2,9 @@
 *.DS_Store
 *.swp
 output_glue
+*output*
+output_glue
 output
 
-.idea
-.vscode
+.idea/
+.vscode/

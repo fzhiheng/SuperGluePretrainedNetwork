@@ -43,20 +43,18 @@ def pixel2normalized(pixel: np.ndarray, K):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="train")
     parser.add_argument("--npz_root", type=str, help="匹配后的结果保存路径")
-    parser.add_argument("--timestamp_path", type=str, help="对应的时间戳文件")
     parser.add_argument("--intrinsic_path", type=str, help="相机对应的内参文件")
     parser.add_argument("--output", type=str, default="./output",help="rosbag保存路径")
     parser.add_argument("--rosbag_name", type=str, help="rosbag的名字")
     args = parser.parse_args()
 
 
-    # ROOT = args.npz_root
-    ROOT = r"/home/fzh/MyWork/my_github/SuperGluePretrainedNetwork/output_glue/0061_front_2048"
+    ROOT = args.npz_root
+    # ROOT = r"/home/fzh/MyWork/my_github/SuperGluePretrainedNetwork/output_glue/0061_front_2048"
     BAG_NAME = args.rosbag_name
     BAG_PATH = os.path.join(args.output)
     os.makedirs(BAG_PATH, exist_ok=True)
     BAG_PATH = os.path.join(BAG_PATH, BAG_NAME)
-
 
     npz_paths = glob.glob(os.path.join(ROOT, "*.npz"))
     npz_paths = sorted(npz_paths)

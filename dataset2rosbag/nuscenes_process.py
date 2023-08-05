@@ -158,7 +158,7 @@ if __name__ == "__main__":
                         help="生成的txt名字，在给定image_root的情况下，该参数才有作用，不指定的话使用image_root路径作为的名字")
 
     parser.add_argument("--glue_output", type=str, default="./glue_output", help="匹配生成的路径")
-    parser.add_argument("--glue_flag", action='store_true', default=False, help="是否进行匹配")
+    parser.add_argument("--glue", action='store_true', default=False, help="是否进行匹配")
     parser.add_argument("--max_keypoints", type=int, default=1024, help="是否进行匹配")
     parser.add_argument("--nms_radius", type=int, default=3, help="是否进行匹配")
     parser.add_argument("--resize", type=int, default=1600, help="是否进行匹配")
@@ -172,10 +172,10 @@ if __name__ == "__main__":
         raise ValueError("mini_root must be specified")
 
     # 进行match
-    if args.glue_flag:
+    if args.glue:
         # TODO 多进程
         for input_dir, input_pairs, scene_name in zip(roots_paths, pairs_paths, scene_names):
-            output_path = os.path.join(args.output_glue, scene_name, args.save_mode)
+            output_path = os.path.join(args.glue_output, scene_name, args.save_mode)
             txt_name = os.path.basename(input_pairs).split(".")[0]
             output_path = os.path.join(output_path, f"{txt_name}_{args.resize}_{args.max_keypoints}")
             os.makedirs(output_path, exist_ok=True)
