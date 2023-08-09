@@ -3,6 +3,7 @@ import sys
 import argparse
 from fnmatch import fnmatchcase
 import rosbag
+import shutil
 
 # Project ：SuperGluePretrainedNetwork 
 # File    ：merge_bag.py
@@ -22,6 +23,8 @@ def main():
                         help='verbose output')
     parser.add_argument('-t', '--topics', default="*",
                         help='string interpreted as a list of topics (wildcards \'*\' and \'?\' allowed) to include in the merged bag file')
+    parser.add_argument('-d', '--delete', action="store_true", default=False,
+                        help="是否删除inputbags")
 
     args = parser.parse_args()
 
@@ -60,6 +63,9 @@ def main():
     if (args.verbose):
         print("Total: Included %d messages and skipped %d" % (total_included_count, total_skipped_count))
 
+    if (args.delete):
+        for ifile in args.inputbag:
+            shutil.rmtree(ifile)
 
 if __name__ == "__main__":
     main()

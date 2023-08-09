@@ -101,12 +101,12 @@
 
 ## 合并rosbag 
 
-`python3 -m utils.merge_bag --inputbag bag1 bag2 --outputbag /path/to/outputbag  -v`
+- `python3 -m utils.merge_bag --inputbag bag1 bag2 --outputbag /path/to/outputbag  -v`
 
-参数列表如下：
+- 参数列表如下：
 
-`--inputbag`：多选，需要合并的bag包
+- `--inputbag`：多选，需要合并的bag包
+- `--outputbag`：合并后包的保存路径
 
-`--outputbag`：合并后包的保存路径
-
-`-t`：需要保存的topic，支持正则表达式匹配
+- `-t`：需要保存的topic，支持正则表达式匹配，默认全部
+- `-d`：是否删除源bag包
