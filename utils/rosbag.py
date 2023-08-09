@@ -63,9 +63,15 @@ def write_rosbag(npz_root, intrinsic_path, save_path):
         # 由于nuscenes的图片的命名方式中包含时间戳，因此可以直接从文件名中获取时间戳
         # n015-2018-07-24-11-22-45+0800__CAM_FRONT__1532402927612460.jpg,这张图片的时间戳为1532402927612460
         cur_time = os.path.basename(path).split("_")[-2]
-        cur_time = int(cur_time)
+        cur_time_sec = int(cur_time[:-6])
+        cur_time_nsecs = int(cur_time[-6:])*1000
+        cur_time = float(cur_time)
+
         last_time = os.path.basename(path).split("_")[5]
-        last_time = int(last_time)
+        last_time_sec = int(last_time[:-6])
+        last_time_nsecs = int(last_time[-6:])*1000
+        last_time = float(last_time)
+
         dt = (cur_time - last_time) / 1e6
 
         cam_name = os.path.basename(path).split("_")[3]
@@ -111,7 +117,7 @@ def write_rosbag(npz_root, intrinsic_path, save_path):
 
             # 创建一个PointCloud类型的消息
             point_cloud = PointCloud()
-            stamp = rospy.Time.from_sec(last_time / 1e6)
+            stamp = rospy.Time(last_time_sec,last_time_nsecs)
             point_cloud.header.stamp = stamp
             point_cloud.points = points
             point_cloud.channels = channels
@@ -147,7 +153,7 @@ def write_rosbag(npz_root, intrinsic_path, save_path):
 
         # with rosbag.Bag(save_path, 'w+') as bag:
         point_cloud = PointCloud()
-        stamp = rospy.Time.from_sec(cur_time / 1e6)
+        stamp = rospy.Time(cur_time_sec, cur_time_nsecs)
         point_cloud.header.stamp = stamp
         point_cloud.points = points
         point_cloud.channels = channels
