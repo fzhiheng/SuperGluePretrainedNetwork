@@ -1,7 +1,11 @@
 # -*- coding: UTF-8 -*-
 import sys
+import os
 import argparse
 from fnmatch import fnmatchcase
+
+import pypose
+
 import rosbag
 import shutil
 
@@ -17,8 +21,8 @@ import shutil
 def main():
     parser = argparse.ArgumentParser(
         description='Merge one or more bag files with the possibilities of filtering topics.')
-    parser.add_argument('--outputbag',help='output bag file with topics merged')
     parser.add_argument('--inputbag', nargs='+',help='input bag files')
+    parser.add_argument('--outputbag', type=str, default=None, help='output bag file with topics merged')
     parser.add_argument('-v', '--verbose', action="store_true", default=False,
                         help='verbose output')
     parser.add_argument('-t', '--topics', default="*",
@@ -33,11 +37,18 @@ def main():
     total_included_count = 0
     total_skipped_count = 0
 
+    if args.outputbag is None:
+        infiles = [os.path.basename(file).split(".")[0] for file in args.inputbag]
+        outfile = "_".join(infiles)+".bag"
+        outpath = os.path.join(os.path.dirname(args.inputbag[0]), outfile)
+    else:
+        outpath = args.outputbag
+
     if (args.verbose):
-        print("Writing bag file: " + args.outputbag)
+        print(f"Writing bag file: {outpath}")
         print("Matching topics against patters: '%s'" % ' '.join(topics))
 
-    with rosbag.Bag(args.outputbag, 'w') as o:
+    with rosbag.Bag(outpath, 'w') as o:
         for ifile in args.inputbag:
             matchedtopics = []
             included_count = 0
