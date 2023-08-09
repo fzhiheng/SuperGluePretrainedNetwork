@@ -15,8 +15,7 @@ from pyquaternion import Quaternion
 # Date    ：2023/7/27 下午3:19
 
 
-# 将nuscenes数据集中的图片保存到指定的文件夹中
-def save_images(dataset_root, save_to_root, scene_seq="all", save_mode="sample", camera_name="CAM_FRONT", copy=False):
+def save_images(dataset_root, save_to_root, scene_seq, step, camera_name, copy):
     """
 
     Args:
@@ -28,12 +27,17 @@ def save_images(dataset_root, save_to_root, scene_seq="all", save_mode="sample",
     Returns:
 
     """
+    support_cams = ['CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_BACK_RIGHT', 'CAM_BACK', 'CAM_BACK_LEFT','CAM_FRONT_LEFT']
     nusc = NuScenes(version='v1.0-mini', dataroot=dataset_root, verbose=True)
-    if camera_name != "all":
-        camera_names = [camera_name]
+    if isinstance(camera_name, str):
+         camera_names = support_cams if camera_name == "all" else [camera_name]
+    elif isinstance(camera_name, list):
+        camera_names = camera_name
+        if set(camera_names) - set(support_cams):
+            raise ValueError(f"camera_name must be in {support_cams} or all, but got {camera_name}")
     else:
-        camera_names = ['CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_BACK_RIGHT', 'CAM_BACK', 'CAM_BACK_LEFT',
-                        'CAM_FRONT_LEFT']
+        raise ValueError("camera_name must be str or list")
+
 
     pairs_paths = []
     roots_paths = []
@@ -48,19 +52,6 @@ def save_images(dataset_root, save_to_root, scene_seq="all", save_mode="sample",
 
         for camera_name in camera_names:
             print(f"process camera_name {camera_name}")
-            # 创建相机文件夹
-            if save_mode == "sample":
-                camera_root = os.path.join(save_scene_root, "sample-img", camera_name)
-                pairs_txt_root = os.path.join(save_scene_root, "sample")
-            elif save_mode == "sweep":  # sweep中的图像是包含所有的相机图像的
-                camera_root = os.path.join(save_scene_root, "sweep-img", camera_name)
-                pairs_txt_root = os.path.join(save_scene_root, "sweep")
-            else:
-                raise ValueError("save_mode must be sample or all")
-            if copy:
-                os.makedirs(camera_root, exist_ok=True)
-            os.makedirs(pairs_txt_root, exist_ok=True)
-
             first_sample_token = scene['first_sample_token']
             sample = nusc.get('sample', first_sample_token)
             sensor = nusc.get('sample_data', sample['data'][camera_name])
@@ -78,14 +69,6 @@ def save_images(dataset_root, save_to_root, scene_seq="all", save_mode="sample",
             with open(os.path.join(save_scene_root, f"{camera_name}.json"), "w", encoding='utf8') as fp:
                 json.dump(intrinsic, fp, ensure_ascii=False, indent=4)
 
-            filename = sensor["filename"]
-            src_path = os.path.join(dataset_root, filename)
-            image_root = os.path.dirname(src_path)
-            base_name = os.path.basename(src_path)
-            if copy:
-                dst_path = os.path.join(camera_root, base_name)
-                shutil.copy(src_path, dst_path)
-
             files = []
             times = []
             roots = []
@@ -97,10 +80,7 @@ def save_images(dataset_root, save_to_root, scene_seq="all", save_mode="sample",
                 files.append(base_name)
                 times.append(timestamp)
                 roots.append(os.path.dirname(src_path))
-                if copy:
-                    dst_path = os.path.join(camera_root, base_name)
-                    shutil.copy(src_path, dst_path)
-                if save_mode == "sample":
+                if step < 1:
                     if sample['next']:
                         sample = nusc.get('sample', sample['next'])
                         sensor = nusc.get('sample_data', sample['data'][camera_name])
@@ -113,22 +93,26 @@ def save_images(dataset_root, save_to_root, scene_seq="all", save_mode="sample",
                         break
 
 
+            pairs_txt_root = os.path.join(save_scene_root, "sweep" if step > 0 else "sample")
+            os.makedirs(pairs_txt_root, exist_ok=True)
+
+            start_index = max(1, step)  # step<1的话，列表里的本来就已经是sample了
             # 保存图像根路径
-            image_roots = [f"{last} {cur}" for last, cur in zip(roots[:-1], roots[1:])]
+            image_roots = [f"{last} {cur}" for last, cur in zip(roots[:-start_index], roots[start_index:])]
             root_save_path = os.path.join(pairs_txt_root, f"{camera_name}_root.txt")
             with open(root_save_path, "w") as f:
                 content = "\n".join(image_roots)
                 f.write(content)
 
             # ====================== 保存pairs ======================
-            pairs = [f"{last} {cur}" for last, cur in zip(files[:-1], files[1:])]
+            pairs = [f"{last} {cur}" for last, cur in zip(files[:-start_index], files[start_index:])]
             pairs_save_path = os.path.join(pairs_txt_root, f"{camera_name}.txt")
             with open(pairs_save_path, "w") as f:
                 content = "\n".join(pairs)
                 f.write(content)
 
             # ====================== 保存时间戳 ======================
-            time_pairs = [f"{last} {cur}" for last, cur in zip(times[:-1], times[1:])]
+            time_pairs = [f"{last} {cur}" for last, cur in zip(times[:-start_index], times[start_index:])]
             time_save_path = os.path.join(pairs_txt_root, f"{camera_name}_time.txt")
             with open(time_save_path, "w") as f:
                 content = "\n".join(time_pairs)
@@ -138,6 +122,14 @@ def save_images(dataset_root, save_to_root, scene_seq="all", save_mode="sample",
             pairs_paths.append(pairs_save_path)
             scene_names.append(scene_name)
 
+            if copy:
+                dst_img_root = os.path.join(save_scene_root, "sweep-img" if step > 0 else "sample-img")
+                os.makedirs(dst_img_root, exist_ok=True)
+                for src_root, src_name in zip(roots, files):
+                    src_path = os.path.join(src_root, src_name)
+                    dst_path = os.path.join(dst_img_root, src_name)
+                    shutil.copy(src_path, dst_path)
+
         return roots_paths, pairs_paths, scene_names
 
 
@@ -146,10 +138,10 @@ if __name__ == "__main__":
     parser.add_argument("--mini_root", type=str, default=None,
                         help="nuscenes mini 数据集路径，如果不指定，则需要指定image_root")
     parser.add_argument("--scene", type=str, default="all", help="mini数据集中需要生成的scene,默认全部生成")
-    parser.add_argument("--save_mode", type=str, default="sweep", help="sample or sweep")
-    parser.add_argument("--save_cam", type=str, default="CAM_FRONT", help="需要保存的相机")
+    parser.add_argument("--camera", type=str, default="CAM_FRONT", help="需要保存的相机")
+    parser.add_argument("--step", type=int, default=1, help="图片对之间的间隔")
     parser.add_argument("--output", type=str, default="./nuscenes_output", help="生成的图片和pairs文本的输出路径")
-    parser.add_argument("--copy", type=bool, default=False,
+    parser.add_argument("--copy", action='store_true', default=False,
                         help="是否将图片复制到指定的文件夹中，如果为False，则只生成pairs文本")
 
     parser.add_argument("--image_root", type=str, default=None,
@@ -157,17 +149,17 @@ if __name__ == "__main__":
     parser.add_argument("--txt_name", type=str,
                         help="生成的txt名字，在给定image_root的情况下，该参数才有作用，不指定的话使用image_root路径作为的名字")
 
-    parser.add_argument("--glue_output", type=str, default="./glue_output", help="匹配生成的路径")
     parser.add_argument("--glue", action='store_true', default=False, help="是否进行匹配")
-    parser.add_argument("--max_keypoints", type=int, default=1024, help="是否进行匹配")
-    parser.add_argument("--nms_radius", type=int, default=3, help="是否进行匹配")
-    parser.add_argument("--resize", type=int, default=1600, help="是否进行匹配")
+    parser.add_argument("--glue_output", type=str, default="./glue_output", help="匹配生成的路径")
+    parser.add_argument("--max_keypoints", type=int, default=1024)
+    parser.add_argument("--nms_radius", type=int, default=3)
+    parser.add_argument("--resize", type=int, default=-1)
 
     args = parser.parse_args()
 
     if args.mini_root is not None:
-        roots_paths, pairs_paths, scene_names = save_images(args.mini_root, args.output, args.scene, args.save_mode,
-                                                                args.save_cam, args.copy)
+        roots_paths, pairs_paths, scene_names = save_images(args.mini_root, args.output, args.scene, args.step,
+                                                                args.camera, args.copy)
     else:
         raise ValueError("mini_root must be specified")
 
@@ -175,7 +167,13 @@ if __name__ == "__main__":
     if args.glue:
         # TODO 多进程
         for input_dir, input_pairs, scene_name in zip(roots_paths, pairs_paths, scene_names):
-            output_path = os.path.join(args.glue_output, scene_name, args.save_mode)
+            if args.step < 1:
+                parent_name = "sample"
+            elif args.step == 1:
+                parent_name = "sweep"
+            else:
+                parent_name = "sweep-" + str(args.step)
+            output_path = os.path.join(args.glue_output, scene_name, parent_name)
             txt_name = os.path.basename(input_pairs).split(".")[0]
             output_path = os.path.join(output_path, f"{txt_name}_{args.resize}_{args.max_keypoints}")
             os.makedirs(output_path, exist_ok=True)
