@@ -28,30 +28,42 @@ def save_images(dataset_root, save_to_root, scene_seq, step, camera_name, copy):
 
     """
     support_cams = ['CAM_FRONT', 'CAM_FRONT_RIGHT', 'CAM_BACK_RIGHT', 'CAM_BACK', 'CAM_BACK_LEFT','CAM_FRONT_LEFT']
-    nusc = NuScenes(version='v1.0-mini', dataroot=dataset_root, verbose=True)
     if isinstance(camera_name, str):
-         camera_names = support_cams if camera_name == "all" else [camera_name]
+         need_process_cameras = support_cams if camera_name == "all" else [camera_name]
     elif isinstance(camera_name, list):
-        camera_names = camera_name
-        if set(camera_names) - set(support_cams):
+        need_process_cameras = camera_name
+        if set(need_process_cameras) - set(support_cams):
             raise ValueError(f"camera_name must be in {support_cams} or all, but got {camera_name}")
     else:
         raise ValueError("camera_name must be str or list")
 
+    support_scenes = ['scene-0061', 'scene-0103', 'scene-0553', 'scene-0655', 'scene-0757', 'scene-0796', 'scene-0916', 'scene-1077', 'scene-1094', 'scene-1100']
+    if isinstance(scene_seq, str):
+         need_process_scenes = support_scenes if scene_seq == "all" else [f"scene-{scene_seq}"]
+    elif isinstance(scene_seq, list):
+        need_process_scenes = [f"scene-{seq}" for seq in scene_seq]
+        if set(need_process_scenes) - set(support_scenes):
+            raise ValueError(f"camera_name must be in {support_scenes} or all, but got {need_process_scenes}")
+    else:
+        raise ValueError("camera_name must be str or list")
+
+    print(f"need_process_scenes:{need_process_scenes}")
+    print(f"need_process_cameras:{need_process_cameras}")
 
     pairs_paths = []
     roots_paths = []
     scene_names = []
+    nusc = NuScenes(version='v1.0-mini', dataroot=dataset_root, verbose=True)
     for scene in nusc.scene:
-        print(f"process scene {scene['name']}")
-        scene_name = scene['name']
-        if not (scene_name == f"scene-{scene_seq}" or scene_seq == "all"):
+        scene_name = str(scene['name'])
+        if not scene_name in need_process_scenes:
             continue
+        print(f"====>process scene {scene_name}")
         save_scene_root = os.path.join(save_to_root, scene_name)
         os.makedirs(save_scene_root, exist_ok=True)
 
-        for camera_name in camera_names:
-            print(f"process camera_name {camera_name}")
+        for camera_name in need_process_cameras:
+            print(f"---->process camera: {camera_name}")
             first_sample_token = scene['first_sample_token']
             sample = nusc.get('sample', first_sample_token)
             sensor = nusc.get('sample_data', sample['data'][camera_name])
@@ -72,7 +84,8 @@ def save_images(dataset_root, save_to_root, scene_seq, step, camera_name, copy):
             files = []
             times = []
             roots = []
-            while (1):
+            loop = True
+            while (loop):
                 filename = sensor["filename"]
                 timestamp = sensor['timestamp']
                 src_path = os.path.join(dataset_root, filename)
@@ -85,13 +98,12 @@ def save_images(dataset_root, save_to_root, scene_seq, step, camera_name, copy):
                         sample = nusc.get('sample', sample['next'])
                         sensor = nusc.get('sample_data', sample['data'][camera_name])
                     else:
-                        break
+                        loop = False
                 else:
                     if sensor['next']:
                         sensor = nusc.get('sample_data', sensor['next'])
                     else:
-                        break
-
+                        loop = False
 
             pairs_txt_root = os.path.join(save_scene_root, "sweep" if step > 0 else "sample")
             os.makedirs(pairs_txt_root, exist_ok=True)
@@ -130,17 +142,17 @@ def save_images(dataset_root, save_to_root, scene_seq, step, camera_name, copy):
                     dst_path = os.path.join(dst_img_root, src_name)
                     shutil.copy(src_path, dst_path)
 
-        return roots_paths, pairs_paths, scene_names
+    return roots_paths, pairs_paths, scene_names
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="train")
     parser.add_argument("--mini_root", type=str, default=None,
                         help="nuscenes mini 数据集路径，如果不指定，则需要指定image_root")
-    parser.add_argument("--scene", type=str, default="all", help="mini数据集中需要生成的scene,默认全部生成")
-    parser.add_argument("--camera", type=str, default="CAM_FRONT", help="需要保存的相机")
+    parser.add_argument("--scene", nargs='+', default="all", help="mini数据集中需要生成的scene,默认全部生成")
+    parser.add_argument("--camera", nargs='+', default="CAM_FRONT", help="需要保存的相机")
     parser.add_argument("--step", type=int, default=1, help="图片对之间的间隔")
-    parser.add_argument("--output", type=str, default="./nuscenes_output", help="生成的图片和pairs文本的输出路径")
+    parser.add_argument("--output", type=str, default="./output/pairs", help="生成的图片和pairs文本的输出路径")
     parser.add_argument("--copy", action='store_true', default=False,
                         help="是否将图片复制到指定的文件夹中，如果为False，则只生成pairs文本")
 
@@ -150,12 +162,16 @@ if __name__ == "__main__":
                         help="生成的txt名字，在给定image_root的情况下，该参数才有作用，不指定的话使用image_root路径作为的名字")
 
     parser.add_argument("--glue", action='store_true', default=False, help="是否进行匹配")
-    parser.add_argument("--glue_output", type=str, default="./glue_output", help="匹配生成的路径")
+    parser.add_argument("--glue_output", type=str, default="./output/glue", help="匹配生成的路径")
     parser.add_argument("--max_keypoints", type=int, default=1024)
     parser.add_argument("--nms_radius", type=int, default=3)
     parser.add_argument("--resize", type=int, default=-1)
 
     args = parser.parse_args()
+
+    scene = args.scene
+    print(scene)
+    print(type(scene))
 
     if args.mini_root is not None:
         roots_paths, pairs_paths, scene_names = save_images(args.mini_root, args.output, args.scene, args.step,

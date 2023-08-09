@@ -50,13 +50,13 @@
 
 - `mini_root`：nuscenes mini 数据集路径
 
-- `scene`：需要处理的scene，默认全部，可供选择的有`0061，0103，0553，0655，0757，0796，0916，1077，1094，1100`。例如`--scene 0063`
+- `scene`：需要处理的scene，默认全部，待选的有`0061，0103，0553，0655，0757，0796，0916，1077，1094，1100`。例如`--scene 0063`或者`--scene 0063 0655`
 
-- `camera`：需要处理的相机，默认`CAM_FRONT`，待选的有`CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT`, `CAM_BACK_RIGHT`，`all`表示全部，可用list处理若干。例如 `--camera ["CAM_FRONT", "CAM_FRONT_LEFT"]`
+- `camera`：需要处理的相机，默认`CAM_FRONT`，待选的有`CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT`, `CAM_BACK_RIGHT`，`all`表示全部，可接多个参数处理若干相机。例如 `--camera CAM_FRONT CAM_FRONT_LEFT`
 
 - `step`：图片对之间的间隔，`<0` 表示图片对来自于sample相邻帧，否则是sweep中相隔step帧
 
-- `output`：结果存放根路径
+- `output`：结果存放根路径，默认./output/pairs
 
 - `copy`：是否将文件复制到新的文件夹中，默认不需要，需要的话使用`--copy`即可
 
@@ -66,7 +66,7 @@
 
 - `glue`：启用superglue生成npz文件，默认不需要，需要的话使用`--glue`即可
 
-- `glue_output`：npz文件生成路径
+- `glue_output`：npz文件生成路径，默认./output/glue
 
 - `max_keypoints`：每张图片提取的最大特征点数，默认1024
 
