@@ -48,31 +48,31 @@
 
 **处理nusenes的参数列表如下**
 
-- `mini_root`：nuscenes mini 数据集路径
+- `--mini_root`：nuscenes mini 数据集路径
 
-- `scene`：需要处理的scene，默认全部，待选的有`0061，0103，0553，0655，0757，0796，0916，1077，1094，1100`。例如`--scene 0063`或者`--scene 0063 0655`
+- `--scene`：需要处理的scene，默认全部，待选的有`0061，0103，0553，0655，0757，0796，0916，1077，1094，1100`。例如`--scene 0063`或者`--scene 0063 0655`
 
-- `camera`：需要处理的相机，默认`CAM_FRONT`，待选的有`CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT`, `CAM_BACK_RIGHT`，`all`表示全部，可接多个参数处理若干相机。例如 `--camera CAM_FRONT CAM_FRONT_LEFT`
+- `--camera`：需要处理的相机，默认`CAM_FRONT`，待选的有`CAM_FRONT`, `CAM_FRONT_LEFT`, `CAM_FRONT_RIGHT`, `CAM_BACK`, `CAM_BACK_LEFT`, `CAM_BACK_RIGHT`，`all`表示全部，可接多个参数处理若干相机。例如 `--camera CAM_FRONT CAM_FRONT_LEFT`
 
-- `step`：图片对之间的间隔，`<0` 表示图片对来自于sample相邻帧，否则是sweep中相隔step帧
+- `--step`：图片对之间的间隔，`<0` 表示图片对来自于sample相邻帧，否则是sweep中相隔step帧
 
-- `output`：结果存放根路径，默认./output/pairs
+- `--output`：结果存放根路径，默认./output/pairs
 
-- `copy`：是否将文件复制到新的文件夹中，默认不需要，需要的话使用`--copy`即可
+- `--copy`：是否将文件复制到新的文件夹中，默认不需要，需要的话使用`--copy`即可
 
   
 
 **使用glue生成npz文件的参数如下：**
 
-- `glue`：启用superglue生成npz文件，默认不需要，需要的话使用`--glue`即可
+- `--glue`：启用superglue生成npz文件，默认不需要，需要的话使用`--glue`即可
 
-- `glue_output`：npz文件生成路径，默认./output/glue
+- `--glue_output`：npz文件生成路径，默认./output/glue
 
-- `max_keypoints`：每张图片提取的最大特征点数，默认1024
+- `--max_keypoints`：每张图片提取的最大特征点数，默认1024
 
-- `resize`：图片进行特征点提取和匹配前resize的大小，-1表示不进行resize，详见`match_pair.py`
+- `--resize`：图片进行特征点提取和匹配前resize的大小，-1表示不进行resize，详见`match_pair.py`
 
-- `nms_radius`：nms处理的半径大小，默认3
+- `--nms_radius`：nms处理的半径大小，默认3
 
   
 
@@ -95,4 +95,18 @@
 
 ## 从npz文件到rosbag
 
-`python -m utils.rosbag --npz_root ./output/glue/scene-0061/sweep/CAM_FRONT_1600_1024 --intrinsic_path ./output/pairs/scene-0061/CAM_FRONT.json `
+`python3 -m utils.rosbag --npz_root ./output/glue/scene-0061/sweep/CAM_FRONT_1600_1024 --intrinsic_path ./output/pairs/scene-0061/CAM_FRONT.json `
+
+
+
+## 合并rosbag 
+
+`python3 -m utils.merge_bag --inputbag bag1 bag2 --outputbag /path/to/outputbag  -v`
+
+参数列表如下：
+
+`--inputbag`：多选，需要合并的bag包
+
+`--outputbag`：合并后包的保存路径
+
+`-t`：需要保存的topic，支持正则表达式匹配

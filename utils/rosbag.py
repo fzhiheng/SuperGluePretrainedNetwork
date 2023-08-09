@@ -43,7 +43,6 @@ def pixel2normalized(pixel: np.ndarray, K):
 
 
 def write_rosbag(npz_root, intrinsic_path, save_path):
-
     bag = rosbag.Bag(save_path, 'w')
     # 读取相机内参
     with open(intrinsic_path, "r") as f:
@@ -164,9 +163,9 @@ def write_rosbag(npz_root, intrinsic_path, save_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="train")
     parser.add_argument("--npz_root", type=str, help="匹配后的结果保存路径")
-    parser.add_argument("--intrinsic_path", type=str, help="相机对应的内参文件")
+    parser.add_argument("-i", "--intrinsic_path", type=str, help="相机对应的内参文件")
     parser.add_argument("--output", type=str, default=None, help="rosbag保存路径")
-    parser.add_argument("--bag_name", type=str, default=None, help="输出的rosbag的名字")
+    parser.add_argument("-o", "--bag_name", type=str, default=None, help="输出的rosbag的名字")
     args = parser.parse_args()
 
     npz_root = args.npz_root
