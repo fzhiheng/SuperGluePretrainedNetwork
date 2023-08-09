@@ -166,12 +166,12 @@ if __name__ == "__main__":
     parser.add_argument("--npz_root", type=str, help="匹配后的结果保存路径")
     parser.add_argument("--intrinsic_path", type=str, help="相机对应的内参文件")
     parser.add_argument("--output", type=str, default=None, help="rosbag保存路径")
-    parser.add_argument("--rosbag_name", type=str, default=None, help="输出的rosbag的名字")
+    parser.add_argument("--bag_name", type=str, default=None, help="输出的rosbag的名字")
     args = parser.parse_args()
 
     npz_root = args.npz_root
     save_root = args.output if args.output else os.path.dirname(npz_root)
-    save_name = args.output if args.output else f"{os.path.basename(npz_root)}.bag"
+    save_name = args.bag_name if args.bag_name else f"{os.path.basename(npz_root)}.bag"
     save_path = os.path.join(save_root, save_name)
     os.makedirs(save_root, exist_ok=True)
     write_rosbag(npz_root, args.intrinsic_path, save_path)

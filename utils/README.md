@@ -95,4 +95,4 @@
 
 ## 从npz文件到rosbag
 
-`python3 -m rosbag.nuscenes2rosbag --npz_root glue_output/scene-0061/sweep/CAM_FRONT_1600_1024 --intrinsic_path nuscenes_output/scene-0061/CAM_FRONT.json `
+`python -m utils.rosbag --npz_root ./output/glue/scene-0061/sweep/CAM_FRONT_1600_1024 --intrinsic_path ./output/pairs/scene-0061/CAM_FRONT.json `

@@ -191,7 +191,7 @@ if __name__ == "__main__":
                 parent_name = "sweep-" + str(args.step)
             output_path = os.path.join(args.glue_output, scene_name, parent_name)
             txt_name = os.path.basename(input_pairs).split(".")[0]
-            output_path = os.path.join(output_path, f"{txt_name}_{args.resize}_{args.max_keypoints}")
+            output_path = os.path.join(output_path, f"{txt_name}_{args.max_keypoints}")
             os.makedirs(output_path, exist_ok=True)
             cmd = f"python3 ./match_pairs.py --resize {args.resize} --superglue outdoor --max_keypoints {args.max_keypoints} " \
                   f"--nms_radius {args.nms_radius} --resize_float --input_pairs {input_pairs} --input_dir {input_dir} " \
